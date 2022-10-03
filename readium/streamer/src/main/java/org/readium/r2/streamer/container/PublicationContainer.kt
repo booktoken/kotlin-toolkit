@@ -33,16 +33,19 @@ internal class PublicationContainer(
 
     override var rootFile = RootFile(rootPath = path, mimetype = mediaType.toString())
 
+    @Deprecated("Can't use this")
     override fun data(relativePath: String): ByteArray = runBlocking {
         publication.get(relativePath).read().getOrThrow()
     }
 
+    @Deprecated("Can't use this")
     override fun dataLength(relativePath: String): Long = runBlocking {
         tryOr(0) {
             publication.get(relativePath).length().getOrThrow()
         }
     }
 
+    @Deprecated("Can't use this")
     override fun dataInputStream(relativePath: String): InputStream =
         ResourceInputStream(publication.get(relativePath)).buffered()
 

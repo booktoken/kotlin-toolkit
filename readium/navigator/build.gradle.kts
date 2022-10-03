@@ -42,20 +42,6 @@ android {
     }
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                from(components.getByName("release"))
-                groupId = "com.github.readium"
-                artifactId = "readium-navigator"
-                artifact(tasks.findByName("sourcesJar"))
-                artifact(tasks.findByName("javadocsJar"))
-            }
-        }
-    }
-}
-
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
@@ -79,8 +65,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.4.0")
     // Needed to avoid a crash with API 31, see https://stackoverflow.com/a/69152986/1474476
     implementation("androidx.work:work-runtime-ktx:2.7.1")
-    implementation("com.duolingo.open:rtl-viewpager:1.0.3")
-    api("com.github.barteksc:android-pdf-viewer:2.8.2")
     // ChrisBane/PhotoView ( for the Zoom handling )
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
 
@@ -94,13 +78,20 @@ dependencies {
     api("com.google.android.exoplayer:extension-workmanager:2.16.1")
     implementation("com.google.android.material:material:1.5.0")
     implementation("com.jakewharton.timber:timber:5.0.1")
-    implementation("com.shopgun.android:utils:1.0.9")
     implementation("joda-time:joda-time:2.10.13")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     // AM NOTE: needs to stay this version for now (June 24,2020)
     //noinspection GradleDependency
     implementation("org.jsoup:jsoup:1.14.3")
+
+    // Android-pdf-viewer dependency included with readium-navigator is no longer available in that name and version. So use this.
+    // Version 2.8.1, but not working normally so use its short commit hash
+    implementation("com.github.barteksc:AndroidPdfViewer:46e2dde")
+    // Rtl-viewpager dependency included with readium-navigator is no longer available in that name. So use this.
+    implementation("com.github.duolingo:rtl-viewpager:1.0.3")
+    // utils dependency included with readium-navigator is no longer available in that name. So use this.
+    implementation("com.github.tjek:markhor:1.0.9")
 
     // Tests
     testImplementation("junit:junit:4.13.2")
