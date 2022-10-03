@@ -15,6 +15,7 @@ import org.readium.r2.shared.Search
 import org.readium.r2.shared.drm.DRM
 import org.readium.r2.shared.extensions.addPrefix
 import org.readium.r2.shared.fetcher.Fetcher
+import org.readium.r2.shared.fetcher.Resource
 import org.readium.r2.shared.fetcher.TransformingFetcher
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Publication
@@ -89,39 +90,11 @@ class EpubParser(
     override suspend fun parse(asset: PublicationAsset, fetcher: Fetcher, warnings: WarningLogger?): Publication.Builder? =
         _parse(asset, fetcher, asset.name)
 
-    @OptIn(Search::class)
     suspend fun _parse(asset: PublicationAsset, fetcher: Fetcher, fallbackTitle: String): Publication.Builder? {
-
-        if (asset.mediaType() != MediaType.EPUB)
-            return null
-
         val opfPath = getRootFilePath(fetcher).addPrefix("/")
-        val opfXmlDocument = fetcher.get(opfPath).readAsXml().getOrThrow()
-        val packageDocument = PackageDocument.parse(opfXmlDocument, opfPath)
-            ?:  throw Exception("Invalid OPF file.")
+        val opfResource = fetcher.get(opfPath)
 
-        val manifest = PublicationFactory(
-                fallbackTitle = fallbackTitle,
-                packageDocument = packageDocument,
-                navigationData = parseNavigationData(packageDocument, fetcher),
-                encryptionData = parseEncryptionData(fetcher),
-                displayOptions = parseDisplayOptions(fetcher)
-            ).create()
-
-        @Suppress("NAME_SHADOWING")
-        var fetcher = fetcher
-        manifest.metadata.identifier?.let {
-            fetcher = TransformingFetcher(fetcher, EpubDeobfuscator(it)::transform)
-        }
-
-        return Publication.Builder(
-            manifest = manifest,
-            fetcher = fetcher,
-            servicesBuilder = Publication.ServicesBuilder(
-                positions = EpubPositionsService.createFactory(reflowablePositionsStrategy),
-                search = StringSearchService.createDefaultFactory(),
-            )
-        )
+        return parseWithOPFResource(asset, opfResource, opfPath, fetcher, fallbackTitle, reflowablePositionsStrategy)
     }
 
     override fun parse(
@@ -175,52 +148,92 @@ class EpubParser(
             ?.getAttr("full-path")
             ?: throw Exception("Unable to find an OPF file.")
 
-    private suspend fun parseEncryptionData(fetcher: Fetcher): Map<String, Encryption> =
-        fetcher.readAsXmlOrNull("/META-INF/encryption.xml")
-            ?.let { EncryptionParser.parse(it) }
-            ?: emptyMap()
-
-    private suspend fun parseNavigationData(packageDocument: PackageDocument, fetcher: Fetcher): Map<String, List<Link>> =
-        if (packageDocument.epubVersion < 3.0) {
-            val ncxItem =
-                if (packageDocument.spine.toc != null) {
-                    packageDocument.manifest.firstOrNull { it.id == packageDocument.spine.toc }
-                } else {
-                    packageDocument.manifest.firstOrNull { MediaType.NCX.contains(it.mediaType) }
-                }
-            ncxItem?.let {
-                val ncxPath = Href(ncxItem.href, baseHref = packageDocument.path).string
-                fetcher.readAsXmlOrNull(ncxPath)?.let { NcxParser.parse(it, ncxPath) }
-            }
-        } else {
-            val navItem = packageDocument.manifest.firstOrNull { it.properties.contains(Vocabularies.ITEM + "nav") }
-            navItem?.let {
-                val navPath = Href(navItem.href, baseHref = packageDocument.path).string
-                fetcher.readAsXmlOrNull(navPath)?.let { NavigationDocumentParser.parse(it, navPath) }
-            }
-        }.orEmpty()
-
-    private suspend fun parseDisplayOptions(fetcher: Fetcher): Map<String, String> {
-        val displayOptionsXml =
-            fetcher.readAsXmlOrNull("/META-INF/com.apple.ibooks.display-options.xml")
-            ?: fetcher.readAsXmlOrNull("/META-INF/com.kobobooks.display-options.xml")
-
-        return displayOptionsXml?.getFirst("platform", "")
-            ?.get("option", "")
-            ?.mapNotNull { element ->
-                val optName = element.getAttr("name")
-                val optVal = element.text
-                if (optName != null && optVal != null) Pair(optName, optVal) else null
-            }
-            ?.toMap().orEmpty()
-    }
-
     @Deprecated("This is done automatically in [parse], you can remove the call to [fillEncryption]", ReplaceWith(""))
     @Suppress("Unused_parameter")
     fun fillEncryption(container: Container, publication: Publication, drm: DRM?): Pair<Container, Publication> {
         return Pair(container, publication)
     }
 
+    companion object {
+
+        private suspend fun parseEncryptionData(fetcher: Fetcher): Map<String, Encryption> =
+            fetcher.readAsXmlOrNull("/META-INF/encryption.xml")
+                ?.let { EncryptionParser.parse(it) }
+                ?: emptyMap()
+
+        private suspend fun parseNavigationData(packageDocument: PackageDocument, fetcher: Fetcher): Map<String, List<Link>> =
+            if (packageDocument.epubVersion < 3.0) {
+                val ncxItem =
+                    if (packageDocument.spine.toc != null) {
+                        packageDocument.manifest.firstOrNull { it.id == packageDocument.spine.toc }
+                    } else {
+                        packageDocument.manifest.firstOrNull { MediaType.NCX.contains(it.mediaType) }
+                    }
+                ncxItem?.let {
+                    val ncxPath = Href(ncxItem.href, baseHref = packageDocument.path).string
+                    fetcher.readAsXmlOrNull(ncxPath)?.let { NcxParser.parse(it, ncxPath) }
+                }
+            } else {
+                val navItem = packageDocument.manifest.firstOrNull { it.properties.contains(Vocabularies.ITEM + "nav") }
+                navItem?.let {
+                    val navPath = Href(navItem.href, baseHref = packageDocument.path).string
+                    fetcher.readAsXmlOrNull(navPath)?.let { NavigationDocumentParser.parse(it, navPath) }
+                }
+            }.orEmpty()
+
+        private suspend fun parseDisplayOptions(fetcher: Fetcher): Map<String, String> {
+            val displayOptionsXml =
+                fetcher.readAsXmlOrNull("/META-INF/com.apple.ibooks.display-options.xml")
+                    ?: fetcher.readAsXmlOrNull("/META-INF/com.kobobooks.display-options.xml")
+
+            return displayOptionsXml?.getFirst("platform", "")
+                ?.get("option", "")
+                ?.mapNotNull { element ->
+                    val optName = element.getAttr("name")
+                    val optVal = element.text
+                    if (optName != null && optVal != null) Pair(optName, optVal) else null
+                }
+                ?.toMap().orEmpty()
+        }
+
+        /**
+         * Parses the given [PublicationAsset] as an EPUB given its OPF resource and file path ([opfResource] and [opfPath]).
+         */
+        @OptIn(Search::class)
+        suspend fun parseWithOPFResource(asset: PublicationAsset, opfResource: Resource, opfPath: String,
+                                         fetcher: Fetcher, fallbackTitle: String,
+                                         reflowablePositionsStrategy: EpubPositionsService.ReflowableStrategy): Publication.Builder? {
+            if (asset.mediaType() != MediaType.EPUB)
+                return null
+
+            val opfXmlDocument = opfResource.readAsXml().getOrThrow()
+            val packageDocument = PackageDocument.parse(opfXmlDocument, opfPath)
+                ?:  throw Exception("Invalid OPF file.")
+
+            val manifest = PublicationFactory(
+                fallbackTitle = fallbackTitle,
+                packageDocument = packageDocument,
+                navigationData = parseNavigationData(packageDocument, fetcher),
+                encryptionData = parseEncryptionData(fetcher),
+                displayOptions = parseDisplayOptions(fetcher)
+            ).create()
+
+            @Suppress("NAME_SHADOWING")
+            var fetcher = fetcher
+            manifest.metadata.identifier?.let {
+                fetcher = TransformingFetcher(fetcher, EpubDeobfuscator(it)::transform)
+            }
+
+            return Publication.Builder(
+                manifest = manifest,
+                fetcher = fetcher,
+                servicesBuilder = Publication.ServicesBuilder(
+                    positions = EpubPositionsService.createFactory(reflowablePositionsStrategy),
+                    search = StringSearchService.createDefaultFactory(),
+                )
+            )
+        }
+    }
 }
 
 internal fun Publication.setLayoutStyle() {
