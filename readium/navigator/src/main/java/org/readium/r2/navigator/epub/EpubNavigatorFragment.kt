@@ -303,10 +303,7 @@ class EpubNavigatorFragment private constructor(
                 locator.locations.htmlId?.let { htmlId ->
                     url += htmlId.addPrefix("#")
                 }
-                currentFragment?.webView?.apply {
-                    listener.onPageLoading()
-                    loadUrl(url)
-                }
+                currentFragment?.loadPageUrl(url)
             }
         }
 

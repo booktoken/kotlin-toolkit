@@ -190,9 +190,7 @@ class R2EpubPageFragment : Fragment() {
         }
 
         resourceUrl?.let {
-            isLoading = true
-            webView.listener.onPageLoading()
-            webView.loadUrl(it)
+            this.loadPageUrl(it)
         }
 
         setupPadding()
@@ -281,6 +279,17 @@ class R2EpubPageFragment : Fragment() {
         val epubNavigator = navigator ?: return false
         val currentFragment = (epubNavigator.resourcePager.adapter as? R2PagerAdapter)?.getCurrentFragment() as? R2EpubPageFragment ?: return false
         return tag == currentFragment.tag
+    }
+
+    /**
+     * Call to load a url that is specifically for a page in the Epub (spine item).
+     */
+    fun loadPageUrl(pageUrl: String) {
+        webView?.apply {
+            isLoading = true
+            listener.onPageLoading()
+            loadUrl(pageUrl)
+        }
     }
 
     private fun onLoadPage() {
