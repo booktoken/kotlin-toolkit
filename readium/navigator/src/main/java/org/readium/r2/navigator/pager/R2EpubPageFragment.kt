@@ -190,6 +190,7 @@ class R2EpubPageFragment : Fragment() {
 
         resourceUrl?.let {
             isLoading = true
+            webView.listener.onPageLoading()
             webView.loadUrl(it)
         }
 

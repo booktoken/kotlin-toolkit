@@ -91,6 +91,7 @@ class EpubNavigatorFragment private constructor(
 
     interface PaginationListener {
         fun onPageChanged(pageIndex: Int, totalPages: Int, locator: Locator) {}
+        fun onPageLoading() {}
         fun onPageLoaded() {}
     }
 
@@ -302,7 +303,10 @@ class EpubNavigatorFragment private constructor(
                 locator.locations.htmlId?.let { htmlId ->
                     url += htmlId.addPrefix("#")
                 }
-                currentFragment?.webView?.loadUrl(url)
+                currentFragment?.webView?.apply {
+                    listener.onPageLoading()
+                    loadUrl(url)
+                }
             }
         }
 
@@ -426,6 +430,11 @@ class EpubNavigatorFragment private constructor(
 
         override fun onResourceLoaded(link: Link?, webView: R2BasicWebView, url: String?) {
             run(viewModel.onResourceLoaded(link, webView))
+        }
+
+        override fun onPageLoading() {
+            r2Activity?.onPageLoading()
+            paginationListener?.onPageLoading()
         }
 
         override fun onPageLoaded() {

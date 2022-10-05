@@ -33,6 +33,7 @@ interface IR2Activity {
     fun previousResource(v: View? = null) {}
     fun onPageChanged(pageIndex: Int, totalPages: Int, url: String) {}
     fun onPageEnded(end: Boolean) {}
+    fun onPageLoading() {}
     fun onPageLoaded() {}
     fun highlightActivated(id: String) {}
     fun highlightAnnotationMarkActivated(id: String) {}
