@@ -90,6 +90,7 @@ class EpubNavigatorFragment private constructor(
     )
 
     interface PaginationListener {
+        fun onWillChangePage(newPageIndex: Int) {}
         fun onPageChanged(pageIndex: Int, totalPages: Int, locator: Locator) {}
         fun onPageLoading() {}
         fun onPageLoaded() {}
@@ -228,6 +229,9 @@ class EpubNavigatorFragment private constructor(
 //                if (publication.metadata.presentation.layout == EpubLayout.REFLOWABLE) {
 //                    resourcePager.disableTouchEvents = true
 //                }
+                // Let the listener know of the future page change
+                paginationListener?.onWillChangePage(position)
+
                 if (preferences.getBoolean(SCROLL_REF, false)) {
                     if (currentPagerPosition < position) {
                         // handle swipe LEFT
