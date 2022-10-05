@@ -640,6 +640,15 @@ class EpubNavigatorFragment private constructor(
         }
 
     /**
+     * @return True, if the page at the given page index (if a page at that index exists) is loading, otherwise false.
+     */
+    fun isLoadingPage(pageIndex: Int): Boolean {
+        return r2PagerAdapter?.let { adapter ->
+            adapter.mFragments.get(adapter.getItemId(pageIndex)) as? R2EpubPageFragment
+        }?.isLoading == true
+    }
+
+    /**
      * Returns the reflowable page fragment matching the given href, if it is already loaded in the
      * view pager.
      */
