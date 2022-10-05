@@ -60,7 +60,8 @@ class R2EpubPageFragment : Fragment() {
     private var _binding: ViewpagerFragmentEpubBinding? = null
     private val binding get() = _binding!!
 
-    private var isLoading: Boolean = false
+    var isLoading: Boolean = false
+        private set
 
     private val navigator: EpubNavigatorFragment?
         get() = parentFragment as? EpubNavigatorFragment

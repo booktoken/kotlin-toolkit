@@ -635,6 +635,14 @@ class EpubNavigatorFragment private constructor(
         }
 
     /**
+     * @return True, if there is an active page fragment and is loading, otherwise false.
+     */
+    val isCurrentEpubPageLoading: Boolean
+        get() {
+            return this.currentFragment?.isLoading == true
+        }
+
+    /**
      * Returns the reflowable page fragment matching the given href, if it is already loaded in the
      * view pager.
      */
