@@ -47,12 +47,8 @@ dependencies {
     @Suppress("GradleDependency")
     implementation("com.github.barteksc:pdfium-android:1.8.2")
     implementation("com.jakewharton.timber:timber:5.0.1")
-    implementation("com.github.edrlab.nanohttpd:nanohttpd:master-SNAPSHOT") {
-        exclude(group = "org.parboiled")
-    }
-    implementation("com.github.edrlab.nanohttpd:nanohttpd-nanolets:master-SNAPSHOT") {
-        exclude(group = "org.parboiled")
-    }
+    implementation(files("libs/nanohttpd-master-SNAPSHOT.jar"))
+    implementation(files("libs/nanohttpd-nanolets-master-SNAPSHOT.jar"))
     //AM NOTE: conflicting support libraries, excluding these
     implementation("com.mcxiaoke.koi:core:0.5.5") {
         exclude(module = "support-v4")
