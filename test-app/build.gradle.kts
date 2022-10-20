@@ -87,12 +87,8 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("androidx.webkit:webkit:1.4.0")
-    implementation("com.github.edrlab.nanohttpd:nanohttpd:master-SNAPSHOT") {
-        exclude(group = "org.parboiled")
-    }
-    implementation("com.github.edrlab.nanohttpd:nanohttpd-nanolets:master-SNAPSHOT") {
-        exclude(group = "org.parboiled")
-    }
+    implementation(files("../readium/streamer/libs/nanohttpd-master-SNAPSHOT.jar"))
+    implementation(files("../readium/streamer/libs/nanohttpd-nanolets-master-SNAPSHOT.jar"))
     implementation("com.google.android.material:material:1.5.0")
     implementation("com.jakewharton.timber:timber:5.0.1")
     // AM NOTE: needs to stay this version for now (June 24,2020)
