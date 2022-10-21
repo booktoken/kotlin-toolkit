@@ -95,7 +95,7 @@ class UserSettings(var preferences: SharedPreferences, val context: Context, pri
         // Appearance
         userProperties.addEnumerable(appearance, appearanceValues, APPEARANCE_REF, APPEARANCE_NAME)
         // Page margins
-        userProperties.addIncremental(pageMargins, 0.5f, 4f, 0.25f, "", PAGE_MARGINS_REF, PAGE_MARGINS_NAME)
+        userProperties.addIncremental(pageMargins, 0.5f, 4f, 0.25f, "%", PAGE_MARGINS_REF, PAGE_MARGINS_NAME)
         // Text alignment
         userProperties.addEnumerable(textAlignment, textAlignmentValues, TEXT_ALIGNMENT_REF, TEXT_ALIGNMENT_NAME)
         // Font family
