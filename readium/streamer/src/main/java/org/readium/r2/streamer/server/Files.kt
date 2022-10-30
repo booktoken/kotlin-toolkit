@@ -41,7 +41,7 @@ internal class Files(
             if (path.startsWith(href)) {
                 val requestedFile = File(file, path.removePrefix(href)).canonicalFile
                 // Makes sure that the requested file is `file` or one of its descendant.
-                if (file.isParentOf(requestedFile)) {
+                if (file == requestedFile || file.isParentOf(requestedFile)) {
                     return ServedFile(requestedFile, fallbackMediaType)
                 }
             }

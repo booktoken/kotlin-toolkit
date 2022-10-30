@@ -50,7 +50,7 @@ abstract class AbstractServer(
     private val resources = Resources()
     private val customResources = Resources()
     private val assets = Assets(context.assets, basePath = "/assets/")
-    private val fonts = Files(basePath = "/${Injectable.Style}/")
+    private val fonts = Files(basePath = "/${Injectable.Font}/")
 
     init {
         assets.add(href = "readium-css", path = "readium/readium-css")
@@ -81,9 +81,10 @@ abstract class AbstractServer(
         }
     }
 
-    fun loadCustomFont(inputStream: InputStream, context: Context, fileName: String) {
+    fun loadCustomFont(inputStream: InputStream, context: Context, fileName: String, fontFamilyName: String) {
         try {
             addFont(fileName, inputStream, context)
+            addResource(fontFamilyName, fileName, custom = true, Injectable.Font)
         } catch (e: IOException) {
             if (DEBUG) Timber.d(e)
         }

@@ -91,7 +91,11 @@ internal class HtmlInjector(
             // Inject all custom resourses
             for ((key, value) in it.resources) {
                 if (value is Pair<*, *>) {
-                    if (Injectable(value.second as String) == Injectable.Script) {
+                    if (Injectable(value.second as String) == Injectable.Font) {
+                        (value.first as? String)?.also { fontFileName ->
+                            endIncludes.add(getHtmlFont(key, "/${Injectable.Font.rawValue}/$fontFileName"))
+                        }
+                    } else if (Injectable(value.second as String) == Injectable.Script) {
                         endIncludes.add(getHtmlScript("/${Injectable.Script.rawValue}/$key"))
                     } else if (Injectable(value.second as String) == Injectable.Style) {
                         endIncludes.add(getHtmlLink("/${Injectable.Style.rawValue}/$key"))
