@@ -685,26 +685,41 @@ class EpubNavigatorFragment private constructor(
     /**
      * Mapping between reading order hrefs and the table of contents title.
      */
-    private val tableOfContentsTitleByHref: Map<String, String> by lazy {
-        fun fulfill(linkList: List<Link>): MutableMap<String, String> {
-            var result: MutableMap<String, String> = mutableMapOf()
+    private val tableOfContentsLinkByHref: Map<String, Link> by lazy {
+        fun fulfill(linkList: List<Link>): MutableMap<String, Link> {
+            var result: MutableMap<String, Link> = mutableMapOf()
 
             for (link in linkList) {
                 val title = link.title?: ""
 
                 if (title.isNotEmpty()) {
-                    result[link.href] = title
+                    result[link.href] = link
+                    // If the link contains a fragment remove it so that ToC entries that have fragment in the path have a fallback
+                    if (link.href.contains("#")) {
+                        val nonFragmentHref = link.href.split("#", limit = 2).first()
+                        // Only keep the first result
+                        if (!result.contains(nonFragmentHref)) {
+                            result[nonFragmentHref] = link
+                        }
+                    }
                 }
 
                 val subResult = fulfill(link.children)
 
-                result = (subResult + result) as MutableMap<String, String>
+                result = (subResult + result) as MutableMap<String, Link>
             }
 
             return result
         }
 
         fulfill(publication.tableOfContents).toMap()
+    }
+
+    /**
+     * @return The Table of Contents [Link] associated with the current location if any.
+     */
+    fun getTableContentsLinkForCurrentLocation(): Link? {
+        return this.tableOfContentsLinkByHref[this.currentLocator.value.href]
     }
 
     private fun notifyCurrentLocation() {
@@ -733,7 +748,7 @@ class EpubNavigatorFragment private constructor(
             }
 
             val locator = positions[positionIndex]
-                    .copy(title = tableOfContentsTitleByHref[resource.href])
+                    .copy(title = tableOfContentsLinkByHref[resource.href]?.title ?: "")
                     .copyWithLocations(progression = progression)
 
             _currentLocator.value = locator
