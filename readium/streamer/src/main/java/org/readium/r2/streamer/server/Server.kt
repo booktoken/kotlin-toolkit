@@ -122,6 +122,19 @@ abstract class AbstractServer(
         return baseUrl
     }
 
+    /**
+     * Removes the routes for the given publication base url.
+     */
+    fun removePublication(publicationBaseURL: URL) {
+        val basePath =
+            try { URLDecoder.decode(publicationBaseURL.path, "UTF-8") }
+            catch (e: Exception) { publicationBaseURL.path }
+
+        removeRoute(basePath + JSON_MANIFEST_HANDLE)
+        removeRoute(basePath + MANIFEST_HANDLE)
+        removeRoute(basePath + MANIFEST_ITEM_HANDLE)
+    }
+
     @Deprecated("Use the easier-to-use addPublication()", replaceWith = ReplaceWith("this.addPublication(publication, userPropertiesFile = File(userPropertiesPath))"), level = DeprecationLevel.ERROR)
     fun addEpub(publication: Publication, fileName: String, userPropertiesPath: String?) {
         addPublication(publication, null, filename = fileName, userPropertiesPath = userPropertiesPath)
